@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wpp.fc.samples.mapper.UserMapper">
+  <select id="list" resultType="user">
+    select *
+    from user
+  </select>
+  <insert id="save" parameterType="user">
+    insert into user (name, age, phone, address, password, b64)
+    values (#{name}, #{age}, #{phone}, #{address}, #{password}, #{b64})
+  </insert>
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+  <typeAliases>
+    <package name="com.wpp.fc.samples.po"/>
+  </typeAliases>
+
+  <plugins>
+    <plugin interceptor="com.wpp.fc.core.mybatis.DefaultConverterInterceptor"/>
+  </plugins>
+
+  <environments default="development">
+    <environment id="development">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql:///micro"/>
+        <property name="username" value="root"/>
+        <property name="password" value="wppQQ9989sda121"/>
+      </dataSource>
+    </environment>
+  </environments>
+
+  <mappers>
+    <package name="com.wpp.fc.samples.mapper"/>
+  </mappers>
+</configuration>
