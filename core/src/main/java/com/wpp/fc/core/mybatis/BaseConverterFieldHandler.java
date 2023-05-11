@@ -7,12 +7,17 @@ import com.wpp.fc.core.SpiConverterRegistry;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.ibatis.reflection.DefaultReflectorFactory;
+import org.apache.ibatis.reflection.Reflector;
+import org.apache.ibatis.reflection.ReflectorFactory;
+import org.apache.ibatis.reflection.invoker.Invoker;
 
 /**
  * @author wpp
@@ -22,9 +27,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class BaseConverterFieldHandler {
 
-  protected final Set<Class> notSupportConvertSet = new HashSet<>();
-  protected final Map<Class<?>, ConvertFields> classConvertFieldsMap = new ConcurrentHashMap<>(16);
-  protected final ConverterRegistry converterRegistry = new SpiConverterRegistry();
+  protected static final ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+  protected static final Set<Class> notSupportConvertSet = Collections.synchronizedSet(new HashSet<>(16));
+  protected static final Map<Class<?>, ConvertFields> classConvertFieldsMap = new ConcurrentHashMap<>(16);
+  protected static final ConverterRegistry converterRegistry = new SpiConverterRegistry();
 
 
   protected Object convert(Object result) throws Throwable {
@@ -80,14 +86,26 @@ public abstract class BaseConverterFieldHandler {
     if (converter == null) {
       return;
     }
-    if (!field.isAccessible()) {
-      field.setAccessible(true);
+    Reflector reflector = reflectorFactory.findForClass(clazz);
+    Object source = null;
+
+    if (reflector.hasGetter(field.getName())) {
+      Invoker getInvoker = reflector.getGetInvoker(field.getName());
+      source = getInvoker.invoke(result, null);
+    } else {
+      if (!field.isAccessible()) {
+        field.setAccessible(true);
+      }
+      source = field.get(result);
     }
 
-    Object source = field.get(result);
-    if (source != null) {
-      Object dest = invokeConvert(converter, source, convert);
-      if (dest != source) {
+    Object dest = invokeConvert(converter, source, convert);
+
+    if (dest != source) {
+      if (reflector.hasSetter(field.getName())) {
+        Invoker setInvoker = reflector.getSetInvoker(field.getName());
+        setInvoker.invoke(result, new Object[]{dest});
+      } else {
         field.set(result, dest);
       }
     }
